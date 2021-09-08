@@ -551,13 +551,13 @@ set_openssl_exception(PyObject *error_class, const char *msg, const int unhandle
     return;
 
   if (msg) {
-    PyObject *s = PyString_FromString(msg);
+    PyObject *s = PyBytes_FromString(msg);
     (void) PyList_Append(errlist, s);
     Py_XDECREF(s);
   }
 
   if (unhandled_line) {
-    PyObject *s = PyString_FromFormat("Unhandled OpenSSL error at " __FILE__ ":%d!", unhandled_line);
+    PyObject *s = PyBytes_FromFormat("Unhandled OpenSSL error at " __FILE__ ":%d!", unhandled_line);
     (void) PyList_Append(errlist, s);
     Py_XDECREF(s);
   }
@@ -612,9 +612,9 @@ x509_object_helper_set_name(PyObject *dn_obj)
         lose_type_error("Each name entry must be a two-element sequence");
 
       if ((type_obj  = PySequence_GetItem(pair_obj, 0)) == NULL ||
-          (type_str  = PyString_AsString(type_obj))     == NULL ||
+          (type_str  = PyBytes_AsString(type_obj))     == NULL ||
           (value_obj = PySequence_GetItem(pair_obj, 1)) == NULL ||
-          (value_str = PyString_AsString(value_obj))    == NULL)
+          (value_str = PyBytes_AsString(value_obj))    == NULL)
         goto error;
 
       if ((asn1_type = ASN1_PRINTABLE_type((unsigned char *) value_str, -1)) != V_ASN1_PRINTABLESTRING)
@@ -895,7 +895,7 @@ Python_to_ASN1_TIME(PyObject *arg, const int object_requires_utctime)
     s = buf;
   }
 
-  if (s == NULL && (s = PyString_AsString(arg)) == NULL)
+  if (s == NULL && (s = PyBytes_AsString(arg)) == NULL)
     goto error;
 
   if (strlen(s) < 10)
@@ -923,7 +923,7 @@ Python_to_ASN1_TIME(PyObject *arg, const int object_requires_utctime)
  * Extract a Python string from a memory BIO.
  */
 static PyObject *
-BIO_to_PyString_helper(BIO *bio)
+BIO_to_PyBytes_helper(BIO *bio)
 {
   char *ptr = NULL;
   Py_ssize_t len = 0;
@@ -1004,7 +1004,7 @@ ASN1_INTEGER_to_PyLong(const ASN1_INTEGER *arg)
   if ((obj = _PyLong_FromByteArray(ASN1_STRING_get0_data(arg),
                                    ASN1_STRING_length(arg),
                                    0, 0)) != NULL)
-    result = PyNumber_Int(obj);
+    result = PyNumber_Long(obj);
 
   Py_XDECREF(obj);
   return result;
@@ -1128,7 +1128,7 @@ ASN1_OBJECT_to_PyString(const ASN1_OBJECT *oid)
   if (OBJ_obj2txt(buf, sizeof(buf), oid, 1) <= 0)
     lose_openssl_error("Couldn't translate OID");
 
-  result = PyString_FromString(buf);
+  result = PyBytes_FromString(buf);
 
  error:
   return result;
@@ -1184,7 +1184,7 @@ _record_validation_status(PyObject *status, const char *code)
 {
   if (status == Py_None)
     return 1;
-  PyObject *value = PyString_FromString(code);
+  PyObject *value = PyBytes_FromString(code);
   if (value == NULL)
     return 0;
   int result = PySet_Add(status, value);
@@ -1492,7 +1492,7 @@ static int check_roa_extract_roa_prefix(const ROAIPAddress *ra,
                                         unsigned *prefixlen,
                                         unsigned *max_prefixlen)
 {
-  unsigned length;
+  int length;
   long maxlen;
 
   assert(ra && addr && prefixlen && max_prefixlen);
@@ -1685,7 +1685,7 @@ extension_get_key_usage(X509_EXTENSION *ext_)
 
   for (bit = 0; key_usage_bit_names[bit] != NULL; bit++) {
     if (ASN1_BIT_STRING_get_bit(ext, bit) &&
-        ((token = PyString_FromString(key_usage_bit_names[bit])) == NULL ||
+        ((token = PyBytes_FromString(key_usage_bit_names[bit])) == NULL ||
          PySet_Add(result, token) < 0))
       goto error;
     Py_XDECREF(token);
@@ -1740,7 +1740,7 @@ extension_set_key_usage(PyObject *args)
 
   while ((item = PyIter_Next(iterator)) != NULL) {
 
-    if ((token = PyString_AsString(item)) == NULL)
+    if ((token = PyBytes_AsString(item)) == NULL)
       goto error;
 
     for (bit = 0; key_usage_bit_names[bit] != NULL; bit++)
@@ -1835,7 +1835,7 @@ extension_set_basic_constraints(PyObject *args)
   if (!PyArg_ParseTuple(args, "O|OO", &is_ca, &pathlen_obj, &critical))
     goto error;
 
-  if (pathlen_obj != Py_None && (pathlen = PyInt_AsLong(pathlen_obj)) < 0)
+  if (pathlen_obj != Py_None && (pathlen = PyLong_AsLong(pathlen_obj)) < 0)
     lose_value_error("Bad pathLenConstraint value");
 
   if ((ext = BASIC_CONSTRAINTS_new()) == NULL)
@@ -1927,25 +1927,25 @@ extension_get_sia(X509_EXTENSION *ext_)
     nid = OBJ_obj2nid(a->method);
     uri = (char *) ASN1_STRING_get0_data(a->location->d.uniformResourceIdentifier);
     if (nid == NID_caRepository) {
-      if ((obj = PyString_FromString(uri)) == NULL)
+      if ((obj = PyBytes_FromString(uri)) == NULL)
         goto error;
       PyTuple_SET_ITEM(result_caRepository, n_caRepository++, obj);
       continue;
     }
     if (nid == NID_ad_rpkiManifest) {
-      if ((obj = PyString_FromString(uri)) == NULL)
+      if ((obj = PyBytes_FromString(uri)) == NULL)
         goto error;
       PyTuple_SET_ITEM(result_rpkiManifest, n_rpkiManifest++, obj);
       continue;
     }
     if (nid == NID_ad_signedObject) {
-      if ((obj = PyString_FromString(uri)) == NULL)
+      if ((obj = PyBytes_FromString(uri)) == NULL)
         goto error;
       PyTuple_SET_ITEM(result_signedObject, n_signedObject++, obj);
       continue;
     }
     if (nid == NID_ad_rpkiNotify) {
-      if ((obj = PyString_FromString(uri)) == NULL)
+      if ((obj = PyBytes_FromString(uri)) == NULL)
         goto error;
       PyTuple_SET_ITEM(result_rpkiNotify, n_rpkiNotify++, obj);
       continue;
@@ -2035,7 +2035,7 @@ extension_set_sia(PyObject *args, PyObject *kwds)
 
     while ((item = PyIter_Next(iterator)) != NULL) {
 
-      if (PyString_AsStringAndSize(item, &uri, &urilen) < 0)
+      if (PyBytes_AsStringAndSize(item, &uri, &urilen) < 0)
         goto error;
 
       if ((a = ACCESS_DESCRIPTION_new()) == NULL ||
@@ -2152,7 +2152,7 @@ extension_set_eku(PyObject *args)
 
   while ((item = PyIter_Next(iterator)) != NULL) {
 
-    if ((txt = PyString_AsString(item)) == NULL)
+    if ((txt = PyBytes_AsString(item)) == NULL)
       goto error;
 
     if ((obj = OBJ_txt2obj(txt, 1)) == NULL)
@@ -2352,7 +2352,7 @@ ipaddress_object_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return (PyObject *) self;
   }
 
-  if ((s = PyString_AsString(init)) == NULL)
+  if ((s = PyBytes_AsString(init)) == NULL)
     PyErr_Clear();
   else if (version == 0)
     version = strchr(s, ':') ? 6 : 4;
@@ -2397,7 +2397,7 @@ ipaddress_object_str(ipaddress_object *self)
   if (!inet_ntop(self->type->af, self->address, addrstr, sizeof(addrstr)))
     lose("Couldn't convert IP address");
 
-  return PyString_FromString(addrstr);
+  return PyBytes_FromString(addrstr);
 
  error:
   return NULL;
@@ -2413,8 +2413,8 @@ ipaddress_object_repr(ipaddress_object *self)
   if (!inet_ntop(self->type->af, self->address, addrstr, sizeof(addrstr)))
     lose("Couldn't convert IP address");
 
-  return PyString_FromFormat("<%s object %s at %p>",
-                             self->ob_type->tp_name, addrstr, self);
+  return PyBytes_FromFormat("<%s object %s at %p>",
+                             Py_TYPE(self)->tp_name, addrstr, self);
 
  error:
   return NULL;
@@ -2430,7 +2430,7 @@ ipaddress_object_compare(PyObject *arg1, PyObject *arg2)
   ENTERING(ipaddress_object_compare);
 
   if (obj1 != NULL && obj2 != NULL)
-    cmp = PyObject_Compare(obj1, obj2);
+    cmp = PyObject_RichCompareBool(obj1, obj2, Py_EQ);
 
   Py_XDECREF(obj1);
   Py_XDECREF(obj2);
@@ -2516,21 +2516,21 @@ static PyObject *
 ipaddress_object_to_bytes(ipaddress_object *self)
 {
   ENTERING(ipaddress_object_from_bytes);
-  return PyString_FromStringAndSize((char *) self->address, self->type->length);
+  return PyBytes_FromStringAndSize((char *) self->address, self->type->length);
 }
 
 static PyObject *
 ipaddress_object_get_bits(ipaddress_object *self, GCC_UNUSED void *closure)
 {
   ENTERING(ipaddress_object_get_bits);
-  return PyInt_FromLong(self->type->length * 8);
+  return PyLong_FromLong(self->type->length * 8);
 }
 
 static PyObject *
 ipaddress_object_get_version(ipaddress_object *self, GCC_UNUSED void *closure)
 {
   ENTERING(ipaddress_object_get_version);
-  return PyInt_FromLong(self->type->version);
+  return PyLong_FromLong(self->type->version);
 }
 
 static PyObject *
@@ -2568,7 +2568,7 @@ ipaddress_object_number_binary_helper(binaryfunc function, PyObject *arg1, PyObj
 
   addr = addr1 != NULL ? addr1 : addr2;
 
-  if ((result = (ipaddress_object *) addr->ob_type->tp_alloc(addr->ob_type, 0)) == NULL)
+  if ((result = (ipaddress_object *) Py_TYPE(addr)->tp_alloc(Py_TYPE(addr), 0)) == NULL)
     goto error;
 
   result->type = addr->type;
@@ -2677,7 +2677,7 @@ ipaddress_object_number_invert(ipaddress_object *self)
 
   ENTERING(ipaddress_object_number_invert);
 
-  if ((result = (ipaddress_object *) self->ob_type->tp_alloc(self->ob_type, 0)) == NULL)
+  if ((result = (ipaddress_object *) Py_TYPE(self)->tp_alloc(Py_TYPE(self), 0)) == NULL)
     goto error;
 
   result->type = self->type;
@@ -2700,7 +2700,7 @@ ipaddress_object_copy(ipaddress_object *self, GCC_UNUSED PyObject *args)
 
   ENTERING(ipaddress_object_copy);
 
-  if ((result = (ipaddress_object *) self->ob_type->tp_alloc(self->ob_type, 0)) == NULL)
+  if ((result = (ipaddress_object *) Py_TYPE(self)->tp_alloc(Py_TYPE(self), 0)) == NULL)
     goto error;
 
   memcpy(result->address, self->address, sizeof(result->address));
@@ -2725,87 +2725,31 @@ static PyGetSetDef ipaddress_object_getsetters[] = {
 };
 
 static PyNumberMethods ipaddress_NumberMethods = {
-  ipaddress_object_number_add,                  /* nb_add */
-  ipaddress_object_number_subtract,             /* nb_subtract */
-  0,                                            /* nb_multiply */
-  0,                                            /* nb_divide */
-  0,                                            /* nb_remainder */
-  0,                                            /* nb_divmod */
-  0,                                            /* nb_power */
-  0,                                            /* nb_negative */
-  0,                                            /* nb_positive */
-  0,                                            /* nb_absolute */
-  (inquiry) ipaddress_object_number_nonzero,    /* nb_nonzero */
-  (unaryfunc) ipaddress_object_number_invert,   /* nb_invert */
-  ipaddress_object_number_lshift,               /* nb_lshift */
-  ipaddress_object_number_rshift,               /* nb_rshift */
-  ipaddress_object_number_and,                  /* nb_and */
-  ipaddress_object_number_xor,                  /* nb_xor */
-  ipaddress_object_number_or,                   /* nb_or */
-  0,                                            /* nb_coerce */
-  ipaddress_object_number_int,                  /* nb_int */
-  ipaddress_object_number_long,                 /* nb_long */
-  0,                                            /* nb_float */
-  0,                                            /* nb_oct */
-  0,                                            /* nb_hex */
-  0,                                            /* nb_inplace_add */
-  0,                                            /* nb_inplace_subtract */
-  0,                                            /* nb_inplace_multiply */
-  0,                                            /* nb_inplace_divide */
-  0,                                            /* nb_inplace_remainder */
-  0,                                            /* nb_inplace_power */
-  0,                                            /* nb_inplace_lshift */
-  0,                                            /* nb_inplace_rshift */
-  0,                                            /* nb_inplace_and */
-  0,                                            /* nb_inplace_xor */
-  0,                                            /* nb_inplace_or */
-  0,                                            /* nb_floor_divide */
-  0,                                            /* nb_true_divide */
-  0,                                            /* nb_inplace_floor_divide */
-  0,                                            /* nb_inplace_true_divide */
-  0,                                            /* nb_index */
+  .nb_add = ipaddress_object_number_add,
+  .nb_subtract = ipaddress_object_number_subtract,
+  .nb_bool = (inquiry) ipaddress_object_number_nonzero,
+  .nb_invert = (unaryfunc) ipaddress_object_number_invert,
+  .nb_lshift = ipaddress_object_number_lshift,
+  .nb_rshift = ipaddress_object_number_rshift,
+  .nb_and = ipaddress_object_number_and,
+  .nb_xor = ipaddress_object_number_xor,
+  .nb_or = ipaddress_object_number_or,
+  .nb_int = ipaddress_object_number_int, /* XXX long?! */
 };
 
 static PyTypeObject POW_IPAddress_Type = {
   PyObject_HEAD_INIT(NULL)
-  0,                                        /* ob_size */
-  "rpki.POW.IPAddress",                     /* tp_name */
-  sizeof(ipaddress_object),                 /* tp_basicsize */
-  0,                                        /* tp_itemsize */
-  0,                                        /* tp_dealloc */
-  0,                                        /* tp_print */
-  0,                                        /* tp_getattr */
-  0,                                        /* tp_setattr */
-  ipaddress_object_compare,                 /* tp_compare */
-  (reprfunc) ipaddress_object_repr,         /* tp_repr */
-  &ipaddress_NumberMethods,                 /* tp_as_number */
-  0,                                        /* tp_as_sequence */
-  0,                                        /* tp_as_mapping */
-  (hashfunc) ipaddress_object_hash,         /* tp_hash */
-  0,                                        /* tp_call */
-  (reprfunc) ipaddress_object_str,          /* tp_str */
-  0,                                        /* tp_getattro */
-  0,                                        /* tp_setattro */
-  0,                                        /* tp_as_buffer */
-  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_CHECKTYPES, /* tp_flags */
-  0,                                        /* tp_doc */
-  0,                                        /* tp_traverse */
-  0,                                        /* tp_clear */
-  ipaddress_object_richcompare,             /* tp_richcompare */
-  0,                                        /* tp_weaklistoffset */
-  0,                                        /* tp_iter */
-  0,                                        /* tp_iternext */
-  ipaddress_object_methods,                 /* tp_methods */
-  0,                                        /* tp_members */
-  ipaddress_object_getsetters,              /* tp_getset */
-  0,                                        /* tp_base */
-  0,                                        /* tp_dict */
-  0,                                        /* tp_descr_get */
-  0,                                        /* tp_descr_set */
-  0,                                        /* tp_dictoffset */
-  0,                                        /* tp_init */
-  0,                                        /* tp_alloc */
-  ipaddress_object_new,                     /* tp_new */
+  .tp_name = "rpki.POW.IPAddress",
+  .tp_basicsize = sizeof(ipaddress_object),
+  .tp_repr = (reprfunc) ipaddress_object_repr,
+  .tp_as_number = &ipaddress_NumberMethods,
+  .tp_hash = (hashfunc) ipaddress_object_hash,
+  .tp_str = (reprfunc) ipaddress_object_str,
+  .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+  .tp_richcompare = ipaddress_object_richcompare,
+  .tp_methods = ipaddress_object_methods,
+  .tp_getset = ipaddress_object_getsetters,
+  .tp_new = ipaddress_object_new,
 };
 
 
@@ -2855,7 +2799,7 @@ x509_object_dealloc(x509_object *self)
 {
   ENTERING(x509_object_dealloc);
   X509_free(self->x509);
-  self->ob_type->tp_free((PyObject*) self);
+  Py_TYPE(self)->tp_free((PyObject*) self);
 }
 
 static PyObject *
@@ -2961,7 +2905,7 @@ x509_object_pem_write(x509_object *self)
   if (!PEM_write_bio_X509(bio, self->x509))
     lose_openssl_error("Unable to write certificate");
 
-  result = BIO_to_PyString_helper(bio);
+  result = BIO_to_PyBytes_helper(bio);
 
  error:                         /* Fall through */
   BIO_free(bio);
@@ -2986,7 +2930,7 @@ x509_object_der_write(x509_object *self)
   if (!i2d_X509_bio(bio, self->x509))
     lose_openssl_error("Unable to write certificate");
 
-  result = BIO_to_PyString_helper(bio);
+  result = BIO_to_PyBytes_helper(bio);
 
  error:                         /* Fall through */
   BIO_free(bio);
@@ -3176,7 +3120,7 @@ x509_object_verify(x509_object *self, PyObject *args, PyObject *kwds)
     const char  *oid_txt = NULL;
     ASN1_OBJECT *oid_obj = NULL;
 
-    if ((oid_txt = PyString_AsString(policy)) == NULL)
+    if ((oid_txt = PyBytes_AsString(policy)) == NULL)
       goto error;
 
     if ((oid_obj = OBJ_txt2obj(oid_txt, 1)) == NULL)
@@ -3258,7 +3202,7 @@ x509_object_check_rpki_conformance(x509_object *self, PyObject *args, PyObject *
     goto error;
 
   if (ekuarg != Py_None) {
-    const char *ekutxt = PyString_AsString(ekuarg);
+    const char *ekutxt = PyBytes_AsString(ekuarg);
     if (ekutxt == NULL)
       goto error;
     ekunid = OBJ_txt2nid(ekutxt);
@@ -3999,7 +3943,7 @@ x509_object_get_rfc3779(x509_object *self)
     switch (asid->asnum->type) {
 
     case ASIdentifierChoice_inherit:
-      if ((asn_result = PyString_FromString("inherit")) == NULL)
+      if ((asn_result = PyBytes_FromString("inherit")) == NULL)
         goto error;
       break;
 
@@ -4071,7 +4015,7 @@ x509_object_get_rfc3779(x509_object *self)
       switch (f->ipAddressChoice->type) {
 
       case IPAddressChoice_inherit:
-        if ((*result_obj = PyString_FromString("inherit")) == NULL)
+        if ((*result_obj = PyBytes_FromString("inherit")) == NULL)
           goto error;
         continue;
 
@@ -4176,9 +4120,9 @@ x509_object_set_rfc3779(x509_object *self, PyObject *args, PyObject *kwds)
     if ((asid = ASIdentifiers_new()) == NULL)
       lose_no_memory();
 
-    if (PyString_Check(asn_arg)) {
+    if (PyBytes_Check(asn_arg)) {
 
-      if (strcmp(PyString_AsString(asn_arg), "inherit"))
+      if (strcmp(PyBytes_AsString(asn_arg), "inherit"))
         lose_type_error("ASID must be an iterable that returns range pairs, or the string \"inherit\"");
 
       if (!X509v3_asid_add_inherit(asid, V3_ASID_ASNUM))
@@ -4257,9 +4201,9 @@ x509_object_set_rfc3779(x509_object *self, PyObject *args, PyObject *kwds)
       default: continue;        /* Never happens */
       }
 
-      if (PyString_Check(*argp)) {
+      if (PyBytes_Check(*argp)) {
 
-        if (strcmp(PyString_AsString(*argp), "inherit"))
+        if (strcmp(PyBytes_AsString(*argp), "inherit"))
           lose_type_error("Argument must be an iterable that returns range pairs, or the string \"inherit\"");
 
         if (!X509v3_addr_add_inherit(addr, ip_type->afi, NULL))
@@ -4412,7 +4356,7 @@ x509_object_get_aia(x509_object *self)
     ACCESS_DESCRIPTION *a = sk_ACCESS_DESCRIPTION_value(ext, i);
     if (a->location->type == GEN_URI && OBJ_obj2nid(a->method) == NID_ad_ca_issuers) {
       uri = (char *) ASN1_STRING_get0_data(a->location->d.uniformResourceIdentifier);
-      if ((obj = PyString_FromString(uri)) == NULL)
+      if ((obj = PyBytes_FromString(uri)) == NULL)
         goto error;
       PyTuple_SET_ITEM(result, n++, obj);
     }
@@ -4462,7 +4406,7 @@ x509_object_set_aia(x509_object *self, PyObject *args)
 
   while ((item = PyIter_Next(iterator)) != NULL) {
 
-    if (PyString_AsStringAndSize(item, &uri, &urilen) < 0)
+    if (PyBytes_AsStringAndSize(item, &uri, &urilen) < 0)
       goto error;
 
     if ((a = ACCESS_DESCRIPTION_new()) == NULL ||
@@ -4545,7 +4489,7 @@ x509_object_get_crldp(x509_object *self)
     GENERAL_NAME *gn = sk_GENERAL_NAME_value(dp->distpoint->name.fullname, i);
     if (gn->type == GEN_URI) {
       uri = (char *) ASN1_STRING_get0_data(gn->d.uniformResourceIdentifier);
-      if ((obj = PyString_FromString(uri)) == NULL)
+      if ((obj = PyBytes_FromString(uri)) == NULL)
         goto error;
       PyTuple_SET_ITEM(result, n++, obj);
     }
@@ -4597,7 +4541,7 @@ x509_object_set_crldp(x509_object *self, PyObject *args)
 
   while ((item = PyIter_Next(iterator)) != NULL) {
 
-    if (PyString_AsStringAndSize(item, &uri, &urilen) < 0)
+    if (PyBytes_AsStringAndSize(item, &uri, &urilen) < 0)
       goto error;
 
     if ((gn = GENERAL_NAME_new()) == NULL ||
@@ -4721,7 +4665,7 @@ x509_object_set_certificate_policies(x509_object *self, PyObject *args)
 
   while ((item = PyIter_Next(iterator)) != NULL) {
 
-    if ((oid = PyString_AsString(item)) == NULL)
+    if ((oid = PyBytes_AsString(item)) == NULL)
       goto error;
 
     if ((pol = POLICYINFO_new()) == NULL)
@@ -4776,7 +4720,7 @@ x509_object_pprint(x509_object *self)
   if (!X509_print(bio, self->x509))
     lose_openssl_error("Unable to pretty-print certificate");
 
-  result = BIO_to_PyString_helper(bio);
+  result = BIO_to_PyBytes_helper(bio);
 
  error:                         /* Fall through */
   BIO_free(bio);
@@ -4840,44 +4784,13 @@ static char POW_X509_Type__doc__[] =
 
 static PyTypeObject POW_X509_Type = {
   PyObject_HEAD_INIT(0)
-  0,                                        /* ob_size */
-  "rpki.POW.X509",                          /* tp_name */
-  sizeof(x509_object),                      /* tp_basicsize */
-  0,                                        /* tp_itemsize */
-  (destructor)x509_object_dealloc,          /* tp_dealloc */
-  0,                                        /* tp_print */
-  0,                                        /* tp_getattr */
-  0,                                        /* tp_setattr */
-  0,                                        /* tp_compare */
-  0,                                        /* tp_repr */
-  0,                                        /* tp_as_number */
-  0,                                        /* tp_as_sequence */
-  0,                                        /* tp_as_mapping */
-  0,                                        /* tp_hash */
-  0,                                        /* tp_call */
-  0,                                        /* tp_str */
-  0,                                        /* tp_getattro */
-  0,                                        /* tp_setattro */
-  0,                                        /* tp_as_buffer */
-  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags */
-  POW_X509_Type__doc__,                     /* tp_doc */
-  0,                                        /* tp_traverse */
-  0,                                        /* tp_clear */
-  0,                                        /* tp_richcompare */
-  0,                                        /* tp_weaklistoffset */
-  0,                                        /* tp_iter */
-  0,                                        /* tp_iternext */
-  x509_object_methods,                      /* tp_methods */
-  0,                                        /* tp_members */
-  0,                                        /* tp_getset */
-  0,                                        /* tp_base */
-  0,                                        /* tp_dict */
-  0,                                        /* tp_descr_get */
-  0,                                        /* tp_descr_set */
-  0,                                        /* tp_dictoffset */
-  0,                                        /* tp_init */
-  0,                                        /* tp_alloc */
-  x509_object_new,                          /* tp_new */
+  .tp_name = "rpki.POW.X509",
+  .tp_basicsize = sizeof(x509_object),
+  .tp_dealloc = (destructor)x509_object_dealloc,
+  .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+  .tp_doc = POW_X509_Type__doc__,
+  .tp_methods = x509_object_methods,
+  .tp_new = x509_object_new,
 };
 
 
@@ -4954,7 +4867,7 @@ x509_store_ctx_object_dealloc(x509_store_ctx_object *self)
   ENTERING(x509_store_ctx_object_dealloc);
   X509_STORE_CTX_free(self->ctx);
   X509_STORE_free(self->store);
-  self->ob_type->tp_free((PyObject*) self);
+  Py_TYPE(self)->tp_free((PyObject*) self);
 }
 
 static char x509_store_ctx_object_get_error__doc__[] =
@@ -5073,44 +4986,14 @@ static char POW_X509StoreCTX_Type__doc__[] =
 
 static PyTypeObject POW_X509StoreCTX_Type = {
   PyObject_HEAD_INIT(0)
-  0,                                        /* ob_size */
-  "rpki.POW.X509StoreCTX",                  /* tp_name */
-  sizeof(x509_store_ctx_object),            /* tp_basicsize */
-  0,                                        /* tp_itemsize */
-  (destructor)x509_store_ctx_object_dealloc,/* tp_dealloc */
-  0,                                        /* tp_print */
-  0,                                        /* tp_getattr */
-  0,                                        /* tp_setattr */
-  0,                                        /* tp_compare */
-  0,                                        /* tp_repr */
-  0,                                        /* tp_as_number */
-  0,                                        /* tp_as_sequence */
-  0,                                        /* tp_as_mapping */
-  0,                                        /* tp_hash */
-  0,                                        /* tp_call */
-  0,                                        /* tp_str */
-  0,                                        /* tp_getattro */
-  0,                                        /* tp_setattro */
-  0,                                        /* tp_as_buffer */
-  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags */
-  POW_X509StoreCTX_Type__doc__,             /* tp_doc */
-  0,                                        /* tp_traverse */
-  0,                                        /* tp_clear */
-  0,                                        /* tp_richcompare */
-  0,                                        /* tp_weaklistoffset */
-  0,                                        /* tp_iter */
-  0,                                        /* tp_iternext */
-  x509_store_ctx_object_methods,            /* tp_methods */
-  0,                                        /* tp_members */
-  0,                                        /* tp_getset */
-  0,                                        /* tp_base */
-  0,                                        /* tp_dict */
-  0,                                        /* tp_descr_get */
-  0,                                        /* tp_descr_set */
-  0,                                        /* tp_dictoffset */
-  (initproc) x509_store_ctx_object_init,    /* tp_init */
-  0,                                        /* tp_alloc */
-  x509_store_ctx_object_new,                /* tp_new */
+  .tp_name = "rpki.POW.X509StoreCTX",
+  .tp_basicsize = sizeof(x509_store_ctx_object),
+  .tp_dealloc = (destructor)x509_store_ctx_object_dealloc,
+  .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+  .tp_doc = POW_X509StoreCTX_Type__doc__,
+  .tp_methods = x509_store_ctx_object_methods,
+  .tp_init = (initproc) x509_store_ctx_object_init,
+  .tp_new = x509_store_ctx_object_new,
 };
 
 
@@ -5160,7 +5043,7 @@ crl_object_dealloc(crl_object *self)
 {
   ENTERING(crl_object_dealloc);
   X509_CRL_free(self->crl);
-  self->ob_type->tp_free((PyObject*) self);
+  Py_TYPE(self)->tp_free((PyObject*) self);
 }
 
 static PyObject *
@@ -5740,7 +5623,7 @@ crl_object_pem_write(crl_object *self)
   if (!PEM_write_bio_X509_CRL(bio, self->crl))
     lose_openssl_error("Unable to write CRL");
 
-  result = BIO_to_PyString_helper(bio);
+  result = BIO_to_PyBytes_helper(bio);
 
  error:                         /* Fall through */
   BIO_free(bio);
@@ -5765,7 +5648,7 @@ crl_object_der_write(crl_object *self)
   if (!i2d_X509_CRL_bio(bio, self->crl))
     lose_openssl_error("Unable to write CRL");
 
-  result = BIO_to_PyString_helper(bio);
+  result = BIO_to_PyBytes_helper(bio);
 
  error:                         /* Fall through */
   BIO_free(bio);
@@ -5859,7 +5742,7 @@ crl_object_pprint(crl_object *self)
   if (!X509_CRL_print(bio, self->crl))
     lose_openssl_error("Unable to pretty-print CRL");
 
-  result = BIO_to_PyString_helper(bio);
+  result = BIO_to_PyBytes_helper(bio);
 
  error:                         /* Fall through */
   BIO_free(bio);
@@ -5903,44 +5786,13 @@ static char POW_CRL_Type__doc__[] =
 
 static PyTypeObject POW_CRL_Type = {
   PyObject_HEAD_INIT(0)
-  0,                                     /* ob_size */
-  "rpki.POW.CRL",                        /* tp_name */
-  sizeof(crl_object),                    /* tp_basicsize */
-  0,                                     /* tp_itemsize */
-  (destructor)crl_object_dealloc,        /* tp_dealloc */
-  0,                                     /* tp_print */
-  0,                                     /* tp_getattr */
-  0,                                     /* tp_setattr */
-  0,                                     /* tp_compare */
-  0,                                     /* tp_repr */
-  0,                                     /* tp_as_number */
-  0,                                     /* tp_as_sequence */
-  0,                                     /* tp_as_mapping */
-  0,                                     /* tp_hash */
-  0,                                     /* tp_call */
-  0,                                     /* tp_str */
-  0,                                     /* tp_getattro */
-  0,                                     /* tp_setattro */
-  0,                                     /* tp_as_buffer */
-  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags */
-  POW_CRL_Type__doc__,                   /* tp_doc */
-  0,                                     /* tp_traverse */
-  0,                                     /* tp_clear */
-  0,                                     /* tp_richcompare */
-  0,                                     /* tp_weaklistoffset */
-  0,                                     /* tp_iter */
-  0,                                     /* tp_iternext */
-  crl_object_methods,                    /* tp_methods */
-  0,                                     /* tp_members */
-  0,                                     /* tp_getset */
-  0,                                     /* tp_base */
-  0,                                     /* tp_dict */
-  0,                                     /* tp_descr_get */
-  0,                                     /* tp_descr_set */
-  0,                                     /* tp_dictoffset */
-  0,                                     /* tp_init */
-  0,                                     /* tp_alloc */
-  crl_object_new,                        /* tp_new */
+  .tp_name = "rpki.POW.CRL",
+  .tp_basicsize = sizeof(crl_object),
+  .tp_dealloc = (destructor)crl_object_dealloc,
+  .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+  .tp_doc = POW_CRL_Type__doc__,
+  .tp_methods = crl_object_methods,
+  .tp_new = crl_object_new,
 };
 
 
@@ -5995,7 +5847,7 @@ asymmetric_object_dealloc(asymmetric_object *self)
 {
   ENTERING(asymmetric_object_dealloc);
   EVP_PKEY_free(self->pkey);
-  self->ob_type->tp_free((PyObject*) self);
+  Py_TYPE(self)->tp_free((PyObject*) self);
 }
 
 static PyObject *
@@ -6268,7 +6120,7 @@ asymmetric_object_pem_write_private(asymmetric_object *self, PyObject *args)
   if (!PEM_write_bio_PrivateKey(bio, self->pkey, evp_method, NULL, 0, NULL, passphrase))
     lose_openssl_error("Unable to write key");
 
-  result = BIO_to_PyString_helper(bio);
+  result = BIO_to_PyBytes_helper(bio);
 
  error:                         /* Fall through */
   BIO_free(bio);
@@ -6293,7 +6145,7 @@ asymmetric_object_pem_write_public(asymmetric_object *self)
   if (!PEM_write_bio_PUBKEY(bio, self->pkey))
     lose_openssl_error("Unable to write key");
 
-  result = BIO_to_PyString_helper(bio);
+  result = BIO_to_PyBytes_helper(bio);
 
  error:                         /* Fall through */
   BIO_free(bio);
@@ -6318,7 +6170,7 @@ asymmetric_object_der_write_private(asymmetric_object *self)
   if (!i2d_PrivateKey_bio(bio, self->pkey))
     lose_openssl_error("Unable to write private key");
 
-  result = BIO_to_PyString_helper(bio);
+  result = BIO_to_PyBytes_helper(bio);
 
  error:                         /* Fall through */
   BIO_free(bio);
@@ -6343,7 +6195,7 @@ asymmetric_object_der_write_public(asymmetric_object *self)
   if (!i2d_PUBKEY_bio(bio, self->pkey))
     lose_openssl_error("Unable to write public key");
 
-  result = BIO_to_PyString_helper(bio);
+  result = BIO_to_PyBytes_helper(bio);
 
  error:                         /* Fall through */
   BIO_free(bio);
@@ -6464,7 +6316,7 @@ asymmetric_object_calculate_ski(asymmetric_object *self)
   if (!EVP_Digest(key_data, key_length, digest, &digest_length, EVP_sha1(), NULL))
     lose_openssl_error("Couldn't calculate SHA-1 digest of public key");
 
-  result = PyString_FromStringAndSize((char *) digest, digest_length);
+  result = PyBytes_FromStringAndSize((char *) digest, digest_length);
 
  error:
   X509_PUBKEY_free(pubkey);
@@ -6496,44 +6348,14 @@ static char POW_Asymmetric_Type__doc__[] =
 
 static PyTypeObject POW_Asymmetric_Type = {
   PyObject_HEAD_INIT(0)
-  0,                                     /* ob_size */
-  "rpki.POW.Asymmetric",                 /* tp_name */
-  sizeof(asymmetric_object),             /* tp_basicsize */
-  0,                                     /* tp_itemsize */
-  (destructor)asymmetric_object_dealloc, /* tp_dealloc */
-  0,                                     /* tp_print */
-  0,                                     /* tp_getattr */
-  0,                                     /* tp_setattr */
-  0,                                     /* tp_compare */
-  0,                                     /* tp_repr */
-  0,                                     /* tp_as_number */
-  0,                                     /* tp_as_sequence */
-  0,                                     /* tp_as_mapping */
-  0,                                     /* tp_hash */
-  0,                                     /* tp_call */
-  0,                                     /* tp_str */
-  0,                                     /* tp_getattro */
-  0,                                     /* tp_setattro */
-  0,                                     /* tp_as_buffer */
-  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags */
-  POW_Asymmetric_Type__doc__,            /* tp_doc */
-  0,                                     /* tp_traverse */
-  0,                                     /* tp_clear */
-  0,                                     /* tp_richcompare */
-  0,                                     /* tp_weaklistoffset */
-  0,                                     /* tp_iter */
-  0,                                     /* tp_iternext */
-  asymmetric_object_methods,             /* tp_methods */
-  0,                                     /* tp_members */
-  0,                                     /* tp_getset */
-  0,                                     /* tp_base */
-  0,                                     /* tp_dict */
-  0,                                     /* tp_descr_get */
-  0,                                     /* tp_descr_set */
-  0,                                     /* tp_dictoffset */
-  (initproc) asymmetric_object_init,     /* tp_init */
-  0,                                     /* tp_alloc */
-  asymmetric_object_new,                 /* tp_new */
+  .tp_name = "rpki.POW.Asymmetric",
+  .tp_basicsize = sizeof(asymmetric_object),
+  .tp_dealloc = (destructor)asymmetric_object_dealloc,
+  .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+  .tp_doc = POW_Asymmetric_Type__doc__,
+  .tp_methods = asymmetric_object_methods,
+  .tp_init = (initproc) asymmetric_object_init,
+  .tp_new = asymmetric_object_new,
 };
 
 
@@ -6583,7 +6405,7 @@ asymmetric_params_object_dealloc(asymmetric_params_object *self)
 {
   ENTERING(asymmetric_params_object_dealloc);
   EVP_PKEY_free(self->pkey);
-  self->ob_type->tp_free((PyObject*) self);
+  Py_TYPE(self)->tp_free((PyObject*) self);
 }
 
 static PyObject *
@@ -6647,7 +6469,7 @@ asymmetric_params_object_pem_write(asymmetric_params_object *self)
   if (PEM_write_bio_Parameters(bio, self->pkey) <= 0)
     lose_openssl_error("Unable to write key parameters");
 
-  result = BIO_to_PyString_helper(bio);
+  result = BIO_to_PyBytes_helper(bio);
 
  error:                         /* Fall through */
   BIO_free(bio);
@@ -6799,44 +6621,14 @@ static char POW_AsymmetricParams_Type__doc__[] =
 
 static PyTypeObject POW_AsymmetricParams_Type = {
   PyObject_HEAD_INIT(0)
-  0,                                     /* ob_size */
-  "rpki.POW.AsymmetricParams",           /* tp_name */
-  sizeof(asymmetric_params_object),      /* tp_basicsize */
-  0,                                     /* tp_itemsize */
-  (destructor)asymmetric_params_object_dealloc, /* tp_dealloc */
-  0,                                     /* tp_print */
-  0,                                     /* tp_getattr */
-  0,                                     /* tp_setattr */
-  0,                                     /* tp_compare */
-  0,                                     /* tp_repr */
-  0,                                     /* tp_as_number */
-  0,                                     /* tp_as_sequence */
-  0,                                     /* tp_as_mapping */
-  0,                                     /* tp_hash */
-  0,                                     /* tp_call */
-  0,                                     /* tp_str */
-  0,                                     /* tp_getattro */
-  0,                                     /* tp_setattro */
-  0,                                     /* tp_as_buffer */
-  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags */
-  POW_AsymmetricParams_Type__doc__,      /* tp_doc */
-  0,                                     /* tp_traverse */
-  0,                                     /* tp_clear */
-  0,                                     /* tp_richcompare */
-  0,                                     /* tp_weaklistoffset */
-  0,                                     /* tp_iter */
-  0,                                     /* tp_iternext */
-  asymmetric_params_object_methods,      /* tp_methods */
-  0,                                     /* tp_members */
-  0,                                     /* tp_getset */
-  0,                                     /* tp_base */
-  0,                                     /* tp_dict */
-  0,                                     /* tp_descr_get */
-  0,                                     /* tp_descr_set */
-  0,                                     /* tp_dictoffset */
-  (initproc) asymmetric_params_object_init, /* tp_init */
-  0,                                     /* tp_alloc */
-  asymmetric_params_object_new,          /* tp_new */
+  .tp_name = "rpki.POW.AsymmetricParams",
+  .tp_basicsize = sizeof(asymmetric_params_object),
+  .tp_dealloc = (destructor)asymmetric_params_object_dealloc,
+  .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+  .tp_doc = POW_AsymmetricParams_Type__doc__,
+  .tp_methods = asymmetric_params_object_methods,
+  .tp_init = (initproc) asymmetric_params_object_init,
+  .tp_new = asymmetric_params_object_new,
 };
 
 
@@ -6893,7 +6685,7 @@ digest_object_dealloc(digest_object *self)
 {
   ENTERING(digest_object_dealloc);
   EVP_MD_CTX_free(self->digest_ctx);
-  self->ob_type->tp_free((PyObject*) self);
+  Py_TYPE(self)->tp_free((PyObject*) self);
 }
 
 static char digest_object_update__doc__[] =
@@ -7009,44 +6801,14 @@ static char POW_Digest_Type__doc__[] =
 
 static PyTypeObject POW_Digest_Type = {
   PyObject_HEAD_INIT(0)
-  0,                                  /* ob_size */
-  "rpki.POW.Digest",                  /* tp_name */
-  sizeof(digest_object),              /* tp_basicsize */
-  0,                                  /* tp_itemsize */
-  (destructor)digest_object_dealloc,  /* tp_dealloc */
-  0,                                  /* tp_print */
-  0,                                  /* tp_getattr */
-  0,                                  /* tp_setattr */
-  0,                                  /* tp_compare */
-  0,                                  /* tp_repr */
-  0,                                  /* tp_as_number */
-  0,                                  /* tp_as_sequence */
-  0,                                  /* tp_as_mapping */
-  0,                                  /* tp_hash */
-  0,                                  /* tp_call */
-  0,                                  /* tp_str */
-  0,                                  /* tp_getattro */
-  0,                                  /* tp_setattro */
-  0,                                  /* tp_as_buffer */
-  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags */
-  POW_Digest_Type__doc__,             /* tp_doc */
-  0,                                  /* tp_traverse */
-  0,                                  /* tp_clear */
-  0,                                  /* tp_richcompare */
-  0,                                  /* tp_weaklistoffset */
-  0,                                  /* tp_iter */
-  0,                                  /* tp_iternext */
-  digest_object_methods,              /* tp_methods */
-  0,                                  /* tp_members */
-  0,                                  /* tp_getset */
-  0,                                  /* tp_base */
-  0,                                  /* tp_dict */
-  0,                                  /* tp_descr_get */
-  0,                                  /* tp_descr_set */
-  0,                                  /* tp_dictoffset */
-  (initproc) digest_object_init,      /* tp_init */
-  0,                                  /* tp_alloc */
-  digest_object_new,                  /* tp_new */
+  .tp_name = "rpki.POW.Digest",
+  .tp_basicsize = sizeof(digest_object),
+  .tp_dealloc = (destructor)digest_object_dealloc,
+  .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+  .tp_doc = POW_Digest_Type__doc__,
+  .tp_methods = digest_object_methods,
+  .tp_init = (initproc) digest_object_init,
+  .tp_new = digest_object_new,
 };
 
 
@@ -7074,7 +6836,7 @@ cms_object_dealloc(cms_object *self)
 {
   ENTERING(cms_object_dealloc);
   CMS_ContentInfo_free(self->cms);
-  self->ob_type->tp_free((PyObject*) self);
+  Py_TYPE(self)->tp_free((PyObject*) self);
 }
 
 static PyObject *
@@ -7179,7 +6941,7 @@ cms_object_pem_write(cms_object *self)
   if (!PEM_write_bio_CMS(bio, self->cms))
     lose_openssl_error("Unable to write CMS object");
 
-  result = BIO_to_PyString_helper(bio);
+  result = BIO_to_PyBytes_helper(bio);
 
  error:                         /* Fall through */
   BIO_free(bio);
@@ -7204,7 +6966,7 @@ cms_object_der_write(cms_object *self)
   if (!i2d_CMS_bio(bio, self->cms))
     lose_openssl_error("Unable to write CMS object");
 
-  result = BIO_to_PyString_helper(bio);
+  result = BIO_to_PyBytes_helper(bio);
 
  error:                         /* Fall through */
   BIO_free(bio);
@@ -7489,7 +7251,7 @@ cms_object_verify(cms_object *self, PyObject *args, PyObject *kwds)
   ENTERING(cms_object_verify);
 
   if ((bio = cms_object_verify_helper(self, args, kwds)) != NULL)
-    result = BIO_to_PyString_helper(bio);
+    result = BIO_to_PyBytes_helper(bio);
 
   BIO_free(bio);
   return result;
@@ -7510,7 +7272,7 @@ cms_object_extract_without_verifying(cms_object *self)
   ENTERING(cms_object_extract_without_verifying);
 
   if ((bio = cms_object_extract_without_verifying_helper(self)) != NULL)
-    result = BIO_to_PyString_helper(bio);
+    result = BIO_to_PyBytes_helper(bio);
 
   BIO_free(bio);
   return result;
@@ -7637,7 +7399,7 @@ cms_object_pprint(cms_object *self)
   if (!CMS_ContentInfo_print_ctx(bio, self->cms, 0, NULL))
     lose_openssl_error("Unable to pretty-print CMS object");
 
-  result = BIO_to_PyString_helper(bio);
+  result = BIO_to_PyBytes_helper(bio);
 
  error:
   BIO_free(bio);
@@ -7731,44 +7493,13 @@ static char POW_CMS_Type__doc__[] =
 
 static PyTypeObject POW_CMS_Type = {
   PyObject_HEAD_INIT(0)
-  0,                                  /* ob_size */
-  "rpki.POW.CMS",                     /* tp_name */
-  sizeof(cms_object),                 /* tp_basicsize */
-  0,                                  /* tp_itemsize */
-  (destructor)cms_object_dealloc,     /* tp_dealloc */
-  0,                                  /* tp_print */
-  0,                                  /* tp_getattr */
-  0,                                  /* tp_setattr */
-  0,                                  /* tp_compare */
-  0,                                  /* tp_repr */
-  0,                                  /* tp_as_number */
-  0,                                  /* tp_as_sequence */
-  0,                                  /* tp_as_mapping */
-  0,                                  /* tp_hash */
-  0,                                  /* tp_call */
-  0,                                  /* tp_str */
-  0,                                  /* tp_getattro */
-  0,                                  /* tp_setattro */
-  0,                                  /* tp_as_buffer */
-  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags */
-  POW_CMS_Type__doc__,                /* tp_doc */
-  0,                                  /* tp_traverse */
-  0,                                  /* tp_clear */
-  0,                                  /* tp_richcompare */
-  0,                                  /* tp_weaklistoffset */
-  0,                                  /* tp_iter */
-  0,                                  /* tp_iternext */
-  cms_object_methods,                 /* tp_methods */
-  0,                                  /* tp_members */
-  0,                                  /* tp_getset */
-  0,                                  /* tp_base */
-  0,                                  /* tp_dict */
-  0,                                  /* tp_descr_get */
-  0,                                  /* tp_descr_set */
-  0,                                  /* tp_dictoffset */
-  0,                                  /* tp_init */
-  0,                                  /* tp_alloc */
-  cms_object_new,                     /* tp_new */
+  .tp_name = "rpki.POW.CMS",
+  .tp_basicsize = sizeof(cms_object),
+  .tp_dealloc = (destructor)cms_object_dealloc,
+  .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+  .tp_doc = POW_CMS_Type__doc__,
+  .tp_methods = cms_object_methods,
+  .tp_new = cms_object_new,
 };
 
 
@@ -7972,7 +7703,7 @@ manifest_object_get_version(manifest_object *self)
   if (self->manifest->version)
     return Py_BuildValue("N", ASN1_INTEGER_to_PyLong(self->manifest->version));
   else
-    return PyInt_FromLong(0);
+    return PyLong_FromLong(0);
 
  error:
   return NULL;
@@ -8049,7 +7780,7 @@ manifest_object_set_manifest_number(manifest_object *self, PyObject *args)
   if (!PyArg_ParseTuple(args, "O", &manifestNumber))
     goto error;
 
-  if ((zero = PyInt_FromLong(0)) == NULL)
+  if ((zero = PyLong_FromLong(0)) == NULL)
     goto error;
 
   switch (PyObject_RichCompareBool(manifestNumber, zero, Py_GE)) {
@@ -8267,8 +7998,8 @@ manifest_object_add_files(manifest_object *self, PyObject *args)
     if (PySequence_Fast_GET_SIZE(fast) != 2)
       lose_type_error("FileAndHash entry must be two-element sequence");
 
-    if (PyString_AsStringAndSize(PySequence_Fast_GET_ITEM(fast, 0), &file, &filelen) < 0 ||
-        PyString_AsStringAndSize(PySequence_Fast_GET_ITEM(fast, 1), &hash, &hashlen) < 0)
+    if (PyBytes_AsStringAndSize(PySequence_Fast_GET_ITEM(fast, 0), &file, &filelen) < 0 ||
+        PyBytes_AsStringAndSize(PySequence_Fast_GET_ITEM(fast, 1), &hash, &hashlen) < 0)
       goto error;
 
     if ((fah = FileAndHash_new()) == NULL ||
@@ -8431,44 +8162,14 @@ static char POW_Manifest_Type__doc__[] =
 
 static PyTypeObject POW_Manifest_Type = {
   PyObject_HEAD_INIT(0)
-  0,                                            /* ob_size */
-  "rpki.POW.Manifest",                          /* tp_name */
-  sizeof(manifest_object),                      /* tp_basicsize */
-  0,                                            /* tp_itemsize */
-  (destructor)manifest_object_dealloc,          /* tp_dealloc */
-  0,                                            /* tp_print */
-  0,                                            /* tp_getattr */
-  0,                                            /* tp_setattr */
-  0,                                            /* tp_compare */
-  0,                                            /* tp_repr */
-  0,                                            /* tp_as_number */
-  0,                                            /* tp_as_sequence */
-  0,                                            /* tp_as_mapping */
-  0,                                            /* tp_hash */
-  0,                                            /* tp_call */
-  0,                                            /* tp_str */
-  0,                                            /* tp_getattro */
-  0,                                            /* tp_setattro */
-  0,                                            /* tp_as_buffer */
-  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,     /* tp_flags */
-  POW_Manifest_Type__doc__,                     /* tp_doc */
-  0,                                            /* tp_traverse */
-  0,                                            /* tp_clear */
-  0,                                            /* tp_richcompare */
-  0,                                            /* tp_weaklistoffset */
-  0,                                            /* tp_iter */
-  0,                                            /* tp_iternext */
-  manifest_object_methods,                      /* tp_methods */
-  0,                                            /* tp_members */
-  0,                                            /* tp_getset */
-  &POW_CMS_Type,                                /* tp_base */
-  0,                                            /* tp_dict */
-  0,                                            /* tp_descr_get */
-  0,                                            /* tp_descr_set */
-  0,                                            /* tp_dictoffset */
-  0,                                            /* tp_init */
-  0,                                            /* tp_alloc */
-  manifest_object_new,                          /* tp_new */
+  .tp_name = "rpki.POW.Manifest",
+  .tp_basicsize = sizeof(manifest_object),
+  .tp_dealloc = (destructor)manifest_object_dealloc,
+  .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+  .tp_doc = POW_Manifest_Type__doc__,
+  .tp_methods = manifest_object_methods,
+  .tp_base = &POW_CMS_Type,
+  .tp_new = manifest_object_new,
 };
 
 
@@ -8672,7 +8373,7 @@ roa_object_get_version(roa_object *self)
   if (self->roa->version)
     return Py_BuildValue("N", ASN1_INTEGER_to_PyLong(self->roa->version));
   else
-    return PyInt_FromLong(0);
+    return PyLong_FromLong(0);
 
  error:
   return NULL;
@@ -8752,7 +8453,7 @@ roa_object_set_asid(roa_object *self, PyObject *args)
   if (!PyArg_ParseTuple(args, "O", &asID))
     goto error;
 
-  if ((zero = PyInt_FromLong(0)) == NULL)
+  if ((zero = PyLong_FromLong(0)) == NULL)
     goto error;
 
   switch (PyObject_RichCompareBool(asID, zero, Py_GE)) {
@@ -8953,7 +8654,7 @@ roa_object_set_prefixes(roa_object *self, PyObject *args, PyObject *kwds)
         if (!POW_IPAddress_Check(PySequence_Fast_GET_ITEM(fast, 0)))
           lose_type_error("First element of ROA prefix must be an IPAddress object");
         addr = (ipaddress_object *) PySequence_Fast_GET_ITEM(fast, 0);
-        prefixlen = (unsigned) PyInt_AsLong(PySequence_Fast_GET_ITEM(fast, 1));
+        prefixlen = (unsigned) PyLong_AsLong(PySequence_Fast_GET_ITEM(fast, 1));
         if (PyErr_Occurred())
           goto error;
         break;
@@ -8964,7 +8665,7 @@ roa_object_set_prefixes(roa_object *self, PyObject *args, PyObject *kwds)
       if (maxlenobj == Py_None) {
         maxprefixlen = prefixlen;
       } else {
-        maxprefixlen = (unsigned) PyInt_AsLong(maxlenobj);
+        maxprefixlen = (unsigned) PyLong_AsLong(maxlenobj);
         if (PyErr_Occurred())
           goto error;
       }
@@ -9117,44 +8818,14 @@ static char POW_ROA_Type__doc__[] =
 
 static PyTypeObject POW_ROA_Type = {
   PyObject_HEAD_INIT(0)
-  0,                                            /* ob_size */
-  "rpki.POW.ROA",                               /* tp_name */
-  sizeof(roa_object),                           /* tp_basicsize */
-  0,                                            /* tp_itemsize */
-  (destructor)roa_object_dealloc,               /* tp_dealloc */
-  0,                                            /* tp_print */
-  0,                                            /* tp_getattr */
-  0,                                            /* tp_setattr */
-  0,                                            /* tp_compare */
-  0,                                            /* tp_repr */
-  0,                                            /* tp_as_number */
-  0,                                            /* tp_as_sequence */
-  0,                                            /* tp_as_mapping */
-  0,                                            /* tp_hash */
-  0,                                            /* tp_call */
-  0,                                            /* tp_str */
-  0,                                            /* tp_getattro */
-  0,                                            /* tp_setattro */
-  0,                                            /* tp_as_buffer */
-  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,     /* tp_flags */
-  POW_ROA_Type__doc__,                          /* tp_doc */
-  0,                                            /* tp_traverse */
-  0,                                            /* tp_clear */
-  0,                                            /* tp_richcompare */
-  0,                                            /* tp_weaklistoffset */
-  0,                                            /* tp_iter */
-  0,                                            /* tp_iternext */
-  roa_object_methods,                           /* tp_methods */
-  0,                                            /* tp_members */
-  0,                                            /* tp_getset */
-  &POW_CMS_Type,                                /* tp_base */
-  0,                                            /* tp_dict */
-  0,                                            /* tp_descr_get */
-  0,                                            /* tp_descr_set */
-  0,                                            /* tp_dictoffset */
-  0,                                            /* tp_init */
-  0,                                            /* tp_alloc */
-  roa_object_new,                               /* tp_new */
+  .tp_name = "rpki.POW.ROA",
+  .tp_basicsize = sizeof(roa_object),
+  .tp_dealloc = (destructor)roa_object_dealloc,
+  .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+  .tp_doc = POW_ROA_Type__doc__,
+  .tp_methods = roa_object_methods,
+  .tp_base = &POW_CMS_Type,
+  .tp_new = roa_object_new,
 };
 
 
@@ -9185,7 +8856,7 @@ pkcs10_object_dealloc(pkcs10_object *self)
   ENTERING(pkcs10_object_dealloc);
   X509_REQ_free(self->pkcs10);
   sk_X509_EXTENSION_pop_free(self->exts, X509_EXTENSION_free);
-  self->ob_type->tp_free((PyObject*) self);
+  Py_TYPE(self)->tp_free((PyObject*) self);
 }
 
 static PyObject *
@@ -9309,7 +8980,7 @@ pkcs10_object_pem_write(pkcs10_object *self)
   if (!PEM_write_bio_X509_REQ(bio, self->pkcs10))
     lose_openssl_error("Unable to write PKCS#10 request");
 
-  result = BIO_to_PyString_helper(bio);
+  result = BIO_to_PyBytes_helper(bio);
 
  error:                         /* Fall through */
   BIO_free(bio);
@@ -9334,7 +9005,7 @@ pkcs10_object_der_write(pkcs10_object *self)
   if (!i2d_X509_REQ_bio(bio, self->pkcs10))
     lose_openssl_error("Unable to write PKCS#10 request");
 
-  result = BIO_to_PyString_helper(bio);
+  result = BIO_to_PyBytes_helper(bio);
 
  error:                         /* Fall through */
   BIO_free(bio);
@@ -9768,7 +9439,7 @@ pkcs10_object_pprint(pkcs10_object *self)
   if (!X509_REQ_print(bio, self->pkcs10))
     lose_openssl_error("Unable to pretty-print PKCS#10 request");
 
-  result = BIO_to_PyString_helper(bio);
+  result = BIO_to_PyBytes_helper(bio);
 
  error:                         /* Fall through */
   BIO_free(bio);
@@ -9810,44 +9481,13 @@ static char POW_PKCS10_Type__doc__[] =
 
 static PyTypeObject POW_PKCS10_Type = {
   PyObject_HEAD_INIT(0)
-  0,                                        /* ob_size */
-  "rpki.POW.PKCS10",                        /* tp_name */
-  sizeof(pkcs10_object),                    /* tp_basicsize */
-  0,                                        /* tp_itemsize */
-  (destructor)pkcs10_object_dealloc,        /* tp_dealloc */
-  0,                                        /* tp_print */
-  0,                                        /* tp_getattr */
-  0,                                        /* tp_setattr */
-  0,                                        /* tp_compare */
-  0,                                        /* tp_repr */
-  0,                                        /* tp_as_number */
-  0,                                        /* tp_as_sequence */
-  0,                                        /* tp_as_mapping */
-  0,                                        /* tp_hash */
-  0,                                        /* tp_call */
-  0,                                        /* tp_str */
-  0,                                        /* tp_getattro */
-  0,                                        /* tp_setattro */
-  0,                                        /* tp_as_buffer */
-  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags */
-  POW_PKCS10_Type__doc__,                   /* tp_doc */
-  0,                                        /* tp_traverse */
-  0,                                        /* tp_clear */
-  0,                                        /* tp_richcompare */
-  0,                                        /* tp_weaklistoffset */
-  0,                                        /* tp_iter */
-  0,                                        /* tp_iternext */
-  pkcs10_object_methods,                    /* tp_methods */
-  0,                                        /* tp_members */
-  0,                                        /* tp_getset */
-  0,                                        /* tp_base */
-  0,                                        /* tp_dict */
-  0,                                        /* tp_descr_get */
-  0,                                        /* tp_descr_set */
-  0,                                        /* tp_dictoffset */
-  0,                                        /* tp_init */
-  0,                                        /* tp_alloc */
-  pkcs10_object_new,                        /* tp_new */
+  .tp_name = "rpki.POW.PKCS10",
+  .tp_basicsize = sizeof(pkcs10_object),
+  .tp_dealloc = (destructor)pkcs10_object_dealloc,
+  .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+  .tp_doc = POW_PKCS10_Type__doc__,
+  .tp_methods = pkcs10_object_methods,
+  .tp_new = pkcs10_object_new,
 };
 
 
@@ -10195,10 +9835,18 @@ static struct PyMethodDef pow_module_methods[] = {
  * Module initialization.
  */
 
-void
+static struct PyModuleDef pow_module_def = {
+  PyModuleDef_HEAD_INIT,
+  .m_name = "_POW",
+  .m_doc = pow_module__doc__,
+  .m_size = -1,
+  .m_methods = pow_module_methods,
+};
+
+PyMODINIT_FUNC
 init_POW(void)
 {
-  PyObject *m = Py_InitModule3("_POW", pow_module_methods, pow_module__doc__);
+  PyObject *m = PyModule_Create(&pow_module_def);
   int OpenSSL_ok = 1;
 
   /*
@@ -10378,6 +10026,8 @@ init_POW(void)
 
   if (PyErr_Occurred() || !OpenSSL_ok)
     Py_FatalError("Can't initialize module POW");
+
+  return m;
 }
 
 /*
