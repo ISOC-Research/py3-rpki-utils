@@ -2397,7 +2397,7 @@ ipaddress_object_str(ipaddress_object *self)
   if (!inet_ntop(self->type->af, self->address, addrstr, sizeof(addrstr)))
     lose("Couldn't convert IP address");
 
-  return PyBytes_FromString(addrstr);
+  return PyUnicode_FromString(addrstr);
 
  error:
   return NULL;
@@ -2413,7 +2413,7 @@ ipaddress_object_repr(ipaddress_object *self)
   if (!inet_ntop(self->type->af, self->address, addrstr, sizeof(addrstr)))
     lose("Couldn't convert IP address");
 
-  return PyBytes_FromFormat("<%s object %s at %p>",
+  return PyUnicode_FromFormat("<%s object %s at %p>",
                              Py_TYPE(self)->tp_name, addrstr, self);
 
  error:
