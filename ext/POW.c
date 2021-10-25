@@ -2738,7 +2738,7 @@ static PyNumberMethods ipaddress_NumberMethods = {
 };
 
 static PyTypeObject POW_IPAddress_Type = {
-  PyObject_HEAD_INIT(NULL)
+  PyVarObject_HEAD_INIT(NULL, 0)
   .tp_name = "rpki.POW.IPAddress",
   .tp_basicsize = sizeof(ipaddress_object),
   .tp_repr = (reprfunc) ipaddress_object_repr,
@@ -4731,8 +4731,8 @@ static struct PyMethodDef x509_object_methods[] = {
   Define_Method(pemWrite,               x509_object_pem_write,                  METH_NOARGS),
   Define_Method(derWrite,               x509_object_der_write,                  METH_NOARGS),
   Define_Method(sign,                   x509_object_sign,                       METH_VARARGS),
-  Define_Method(verify,                 x509_object_verify,                     METH_KEYWORDS),
-  Define_Method(checkRPKIConformance,   x509_object_check_rpki_conformance,     METH_KEYWORDS),
+  Define_Method(verify,                 x509_object_verify,                     METH_VARARGS | METH_KEYWORDS),
+  Define_Method(checkRPKIConformance,   x509_object_check_rpki_conformance,     METH_VARARGS | METH_KEYWORDS),
   Define_Method(getPublicKey,           x509_object_get_public_key,             METH_NOARGS),
   Define_Method(setPublicKey,           x509_object_set_public_key,             METH_VARARGS),
   Define_Method(getVersion,             x509_object_get_version,                METH_NOARGS),
@@ -4758,11 +4758,11 @@ static struct PyMethodDef x509_object_methods[] = {
   Define_Method(getEKU,                 x509_object_get_eku,                    METH_NOARGS),
   Define_Method(setEKU,                 x509_object_set_eku,                    METH_VARARGS),
   Define_Method(getRFC3779,             x509_object_get_rfc3779,                METH_NOARGS),
-  Define_Method(setRFC3779,             x509_object_set_rfc3779,                METH_KEYWORDS),
+  Define_Method(setRFC3779,             x509_object_set_rfc3779,                METH_VARARGS | METH_KEYWORDS),
   Define_Method(getBasicConstraints,    x509_object_get_basic_constraints,      METH_NOARGS),
   Define_Method(setBasicConstraints,    x509_object_set_basic_constraints,      METH_VARARGS),
   Define_Method(getSIA,                 x509_object_get_sia,                    METH_NOARGS),
-  Define_Method(setSIA,                 x509_object_set_sia,                    METH_KEYWORDS),
+  Define_Method(setSIA,                 x509_object_set_sia,                    METH_VARARGS | METH_KEYWORDS),
   Define_Method(getAIA,                 x509_object_get_aia,                    METH_NOARGS),
   Define_Method(setAIA,                 x509_object_set_aia,                    METH_VARARGS),
   Define_Method(getCRLDP,               x509_object_get_crldp,                  METH_NOARGS),
@@ -4783,7 +4783,7 @@ static char POW_X509_Type__doc__[] =
   ;
 
 static PyTypeObject POW_X509_Type = {
-  PyObject_HEAD_INIT(0)
+  PyVarObject_HEAD_INIT(NULL, 0)
   .tp_name = "rpki.POW.X509",
   .tp_basicsize = sizeof(x509_object),
   .tp_dealloc = (destructor)x509_object_dealloc,
@@ -4985,7 +4985,7 @@ static char POW_X509StoreCTX_Type__doc__[] =
   ;
 
 static PyTypeObject POW_X509StoreCTX_Type = {
-  PyObject_HEAD_INIT(0)
+  PyVarObject_HEAD_INIT(NULL, 0)
   .tp_name = "rpki.POW.X509StoreCTX",
   .tp_basicsize = sizeof(x509_store_ctx_object),
   .tp_dealloc = (destructor)x509_store_ctx_object_dealloc,
@@ -5752,7 +5752,7 @@ crl_object_pprint(crl_object *self)
 static struct PyMethodDef crl_object_methods[] = {
   Define_Method(sign,                   crl_object_sign,                        METH_VARARGS),
   Define_Method(verify,                 crl_object_verify,                      METH_VARARGS),
-  Define_Method(checkRPKIConformance,   crl_object_check_rpki_conformance,      METH_KEYWORDS),
+  Define_Method(checkRPKIConformance,   crl_object_check_rpki_conformance,      METH_VARARGS | METH_KEYWORDS),
   Define_Method(getVersion,             crl_object_get_version,                 METH_NOARGS),
   Define_Method(setVersion,             crl_object_set_version,                 METH_VARARGS),
   Define_Method(getIssuer,              crl_object_get_issuer,                  METH_VARARGS),
@@ -5785,7 +5785,7 @@ static char POW_CRL_Type__doc__[] =
   ;
 
 static PyTypeObject POW_CRL_Type = {
-  PyObject_HEAD_INIT(0)
+  PyVarObject_HEAD_INIT(NULL, 0)
   .tp_name = "rpki.POW.CRL",
   .tp_basicsize = sizeof(crl_object),
   .tp_dealloc = (destructor)crl_object_dealloc,
@@ -6337,7 +6337,7 @@ static struct PyMethodDef asymmetric_object_methods[] = {
   Define_Class_Method(pemReadPrivateFile, asymmetric_object_pem_read_private_file,      METH_VARARGS),
   Define_Class_Method(derReadPrivate,     asymmetric_object_der_read_private,           METH_VARARGS),
   Define_Class_Method(derReadPrivateFile, asymmetric_object_der_read_private_file,      METH_VARARGS),
-  Define_Class_Method(generateRSA,        asymmetric_object_generate_rsa,               METH_KEYWORDS),
+  Define_Class_Method(generateRSA,        asymmetric_object_generate_rsa,               METH_VARARGS | METH_KEYWORDS),
   Define_Class_Method(generateFromParams, asymmetric_object_generate_from_params,       METH_VARARGS),
   {NULL}
 };
@@ -6347,7 +6347,7 @@ static char POW_Asymmetric_Type__doc__[] =
   ;
 
 static PyTypeObject POW_Asymmetric_Type = {
-  PyObject_HEAD_INIT(0)
+  PyVarObject_HEAD_INIT(NULL, 0)
   .tp_name = "rpki.POW.Asymmetric",
   .tp_basicsize = sizeof(asymmetric_object),
   .tp_dealloc = (destructor)asymmetric_object_dealloc,
@@ -6609,9 +6609,9 @@ static struct PyMethodDef asymmetric_params_object_methods[] = {
   Define_Method(pemWrite,               asymmetric_params_object_pem_write,             METH_NOARGS),
   Define_Class_Method(pemRead,          asymmetric_params_object_pem_read,              METH_VARARGS),
   Define_Class_Method(pemReadFile,      asymmetric_params_object_pem_read_file,         METH_VARARGS),
-  Define_Class_Method(generateEC,       asymmetric_params_object_generate_ec,		METH_KEYWORDS),
-  Define_Class_Method(generateDH,	asymmetric_params_object_generate_dh,           METH_KEYWORDS),
-  Define_Class_Method(generateDSA,	asymmetric_params_object_generate_dsa,          METH_KEYWORDS),
+  Define_Class_Method(generateEC,       asymmetric_params_object_generate_ec,		METH_VARARGS | METH_KEYWORDS),
+  Define_Class_Method(generateDH,	asymmetric_params_object_generate_dh,           METH_VARARGS | METH_KEYWORDS),
+  Define_Class_Method(generateDSA,	asymmetric_params_object_generate_dsa,          METH_VARARGS | METH_KEYWORDS),
   {NULL}
 };
 
@@ -6620,7 +6620,7 @@ static char POW_AsymmetricParams_Type__doc__[] =
   ;
 
 static PyTypeObject POW_AsymmetricParams_Type = {
-  PyObject_HEAD_INIT(0)
+  PyVarObject_HEAD_INIT(NULL, 0)
   .tp_name = "rpki.POW.AsymmetricParams",
   .tp_basicsize = sizeof(asymmetric_params_object),
   .tp_dealloc = (destructor)asymmetric_params_object_dealloc,
@@ -6800,7 +6800,7 @@ static char POW_Digest_Type__doc__[] =
   ;
 
 static PyTypeObject POW_Digest_Type = {
-  PyObject_HEAD_INIT(0)
+  PyVarObject_HEAD_INIT(NULL, 0)
   .tp_name = "rpki.POW.Digest",
   .tp_basicsize = sizeof(digest_object),
   .tp_dealloc = (destructor)digest_object_dealloc,
@@ -7471,9 +7471,9 @@ static struct PyMethodDef cms_object_methods[] = {
   Define_Method(pemWrite,                       cms_object_pem_write,                   METH_NOARGS),
   Define_Method(derWrite,                       cms_object_der_write,                   METH_NOARGS),
   Define_Method(sign,                           cms_object_sign,                        METH_VARARGS),
-  Define_Method(verify,                         cms_object_verify,                      METH_KEYWORDS),
+  Define_Method(verify,                         cms_object_verify,                      METH_VARARGS | METH_KEYWORDS),
   Define_Method(extractWithoutVerifying,        cms_object_extract_without_verifying,   METH_NOARGS),
-  Define_Method(checkRPKIConformance,           cms_object_check_rpki_conformance,      METH_KEYWORDS),
+  Define_Method(checkRPKIConformance,           cms_object_check_rpki_conformance,      METH_VARARGS | METH_KEYWORDS),
   Define_Method(eContentType,                   cms_object_eContentType,                METH_NOARGS),
   Define_Method(signingTime,                    cms_object_signingTime,                 METH_NOARGS),
   Define_Method(pprint,                         cms_object_pprint,                      METH_NOARGS),
@@ -7492,7 +7492,7 @@ static char POW_CMS_Type__doc__[] =
   ;
 
 static PyTypeObject POW_CMS_Type = {
-  PyObject_HEAD_INIT(0)
+  PyVarObject_HEAD_INIT(NULL, 0)
   .tp_name = "rpki.POW.CMS",
   .tp_basicsize = sizeof(cms_object),
   .tp_dealloc = (destructor)cms_object_dealloc,
@@ -8145,8 +8145,8 @@ static struct PyMethodDef manifest_object_methods[] = {
   Define_Method(getFiles,			manifest_object_get_files,                      METH_NOARGS),
   Define_Method(addFiles,			manifest_object_add_files,                      METH_VARARGS),
   Define_Method(sign,				manifest_object_sign,                           METH_VARARGS),
-  Define_Method(verify,				manifest_object_verify,                         METH_KEYWORDS),
-  Define_Method(checkRPKIConformance,		manifest_object_check_rpki_conformance,         METH_KEYWORDS),
+  Define_Method(verify,				manifest_object_verify,                         METH_VARARGS | METH_KEYWORDS),
+  Define_Method(checkRPKIConformance,		manifest_object_check_rpki_conformance,         METH_VARARGS | METH_KEYWORDS),
   Define_Method(extractWithoutVerifying,	manifest_object_extract_without_verifying,      METH_NOARGS),
   Define_Class_Method(pemRead,			manifest_object_pem_read,                       METH_VARARGS),
   Define_Class_Method(pemReadFile,		manifest_object_pem_read_file,                  METH_VARARGS),
@@ -8161,7 +8161,7 @@ static char POW_Manifest_Type__doc__[] =
   ;
 
 static PyTypeObject POW_Manifest_Type = {
-  PyObject_HEAD_INIT(0)
+  PyVarObject_HEAD_INIT(NULL, 0)
   .tp_name = "rpki.POW.Manifest",
   .tp_basicsize = sizeof(manifest_object),
   .tp_dealloc = (destructor)manifest_object_dealloc,
@@ -8799,11 +8799,11 @@ static struct PyMethodDef roa_object_methods[] = {
   Define_Method(getASID,                        roa_object_get_asid,                    METH_NOARGS),
   Define_Method(setASID,                        roa_object_set_asid,                    METH_VARARGS),
   Define_Method(getPrefixes,                    roa_object_get_prefixes,                METH_NOARGS),
-  Define_Method(setPrefixes,                    roa_object_set_prefixes,                METH_KEYWORDS),
+  Define_Method(setPrefixes,                    roa_object_set_prefixes,                METH_VARARGS | METH_KEYWORDS),
   Define_Method(sign,                           roa_object_sign,                        METH_VARARGS),
-  Define_Method(verify,                         roa_object_verify,                      METH_KEYWORDS),
+  Define_Method(verify,                         roa_object_verify,                      METH_VARARGS | METH_KEYWORDS),
   Define_Method(extractWithoutVerifying,        roa_object_extract_without_verifying,   METH_NOARGS),
-  Define_Method(checkRPKIConformance,           roa_object_check_rpki_conformance,      METH_KEYWORDS),
+  Define_Method(checkRPKIConformance,           roa_object_check_rpki_conformance,      METH_VARARGS | METH_KEYWORDS),
   Define_Class_Method(pemRead,                  roa_object_pem_read,                    METH_VARARGS),
   Define_Class_Method(pemReadFile,              roa_object_pem_read_file,               METH_VARARGS),
   Define_Class_Method(derRead,                  roa_object_der_read,                    METH_VARARGS),
@@ -8817,7 +8817,7 @@ static char POW_ROA_Type__doc__[] =
   ;
 
 static PyTypeObject POW_ROA_Type = {
-  PyObject_HEAD_INIT(0)
+  PyVarObject_HEAD_INIT(NULL, 0)
   .tp_name = "rpki.POW.ROA",
   .tp_basicsize = sizeof(roa_object),
   .tp_dealloc = (destructor)roa_object_dealloc,
@@ -9465,7 +9465,7 @@ static struct PyMethodDef pkcs10_object_methods[] = {
   Define_Method(getBasicConstraints,    pkcs10_object_get_basic_constraints,    METH_NOARGS),
   Define_Method(setBasicConstraints,    pkcs10_object_set_basic_constraints,    METH_VARARGS),
   Define_Method(getSIA,                 pkcs10_object_get_sia,                  METH_NOARGS),
-  Define_Method(setSIA,                 pkcs10_object_set_sia,                  METH_KEYWORDS),
+  Define_Method(setSIA,                 pkcs10_object_set_sia,                  METH_VARARGS | METH_KEYWORDS),
   Define_Method(getSignatureAlgorithm,  pkcs10_object_get_signature_algorithm,  METH_NOARGS),
   Define_Method(getExtensionOIDs,       pkcs10_object_get_extension_oids,       METH_NOARGS),
   Define_Class_Method(pemRead,          pkcs10_object_pem_read,                 METH_VARARGS),
@@ -9480,7 +9480,7 @@ static char POW_PKCS10_Type__doc__[] =
   ;
 
 static PyTypeObject POW_PKCS10_Type = {
-  PyObject_HEAD_INIT(0)
+  PyVarObject_HEAD_INIT(NULL, 0)
   .tp_name = "rpki.POW.PKCS10",
   .tp_basicsize = sizeof(pkcs10_object),
   .tp_dealloc = (destructor)pkcs10_object_dealloc,
@@ -9816,7 +9816,7 @@ pow_module_custom_datetime(GCC_UNUSED PyObject *self, PyObject *args)
 }
 
 
-static struct PyMethodDef pow_module_methods[] = {
+static PyMethodDef pow_module_methods[] = {
   Define_Method(getError,               pow_module_get_error,                   METH_NOARGS),
   Define_Method(clearError,             pow_module_clear_error,                 METH_NOARGS),
   Define_Method(getVerificationErrors,  pow_module_get_verification_errors,     METH_NOARGS),
@@ -9844,7 +9844,7 @@ static struct PyModuleDef pow_module_def = {
 };
 
 PyMODINIT_FUNC
-init_POW(void)
+PyInit__POW(void)
 {
   PyObject *m = PyModule_Create(&pow_module_def);
   int OpenSSL_ok = 1;
