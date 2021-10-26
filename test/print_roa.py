@@ -17,7 +17,13 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+"""
+Pretty-print the content of a ROA.  Does NOT attempt to verify the
+signature.
+"""
+
 from os.path import dirname, abspath, join
+import argparse
 import sys
 
 THIS_DIR = dirname(__file__)
@@ -44,22 +50,36 @@ class ROA(rpki.POW.ROA):
         self.v4_prefixes = [self._format_prefix(p) for p in (v4 or ())]
         self.v6_prefixes = [self._format_prefix(p) for p in (v6 or ())]
 
-roa = ROA.derReadFile(sys.argv[1])
-roa.parse()
-print("ROA Version:   ", roa.getVersion())
-print("SigningTime:   ", roa.signingTime())
-print("asID:          ", roa.getASID())
-if roa.v4_prefixes:
-  print(" addressFamily:", 1)
-  for prefix in roa.v4_prefixes:
-    print("     IPAddress:", prefix)
-  if roa.v6_prefixes:
-    print(" addressFamily:", 2)
-    for prefix in roa.v6_prefixes:
-      print("     IPAddress:", prefix)
-print(roa.pprint())
-for cer in roa.certs():
-  print(cer.pprint())
-for crl in roa.crls():
-   print(crl.pprint())
-print
+
+parser = argparse.ArgumentParser(description = __doc__)
+parser.add_argument("--brief", action = "store_true", help = "show only ASN and prefix(es)")
+parser.add_argument("--cms", action = "store_true", help = "print text representation of entire CMS blob")
+parser.add_argument("--signing-time", action = "store_true", help = "show SigningTime in brief mode")
+parser.add_argument("roas", nargs = "+", type = ROA.derReadFile, help = "ROA(s) to print")
+args = parser.parse_args()
+
+for roa in args.roas:
+    roa.parse()
+    if args.brief:
+        if args.signing_time:
+            print(roa.signingTime())
+        print(roa.getASID(), " ".join(roa.v4_prefixes + roa.v6_prefixes))
+    else:
+        print("ROA Version:   ", roa.getVersion())
+        print("SigningTime:   ", roa.signingTime())
+        print("asID:          ", roa.getASID())
+        if roa.v4_prefixes:
+            print(" addressFamily:", 1)
+            for prefix in roa.v4_prefixes:
+                print("     IPAddress:", prefix)
+        if roa.v6_prefixes:
+            print(" addressFamily:", 2)
+            for prefix in roa.v6_prefixes:
+                print("     IPAddress:", prefix)
+        if args.cms:
+            print(roa.pprint())
+            for cer in roa.certs():
+                print(cer.pprint())
+            for crl in roa.crls():
+                print(crl.pprint())
+        print
