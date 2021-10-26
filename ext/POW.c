@@ -1114,21 +1114,21 @@ create_missing_nids(void)
 }
 
 /*
- * Convert an OpenSSL OID to a Python string.
+ * Convert an OpenSSL OID to a Python Unicode object.
  */
 
 static PyObject *
-ASN1_OBJECT_to_PyString(const ASN1_OBJECT *oid)
+ASN1_OBJECT_to_PyUnicode(const ASN1_OBJECT *oid)
 {
   PyObject *result = NULL;
   char buf[512];
 
-  ENTERING(ASN1_OBJECT_to_PyString);
+  ENTERING(ASN1_OBJECT_to_PyUnicode);
 
   if (OBJ_obj2txt(buf, sizeof(buf), oid, 1) <= 0)
     lose_openssl_error("Couldn't translate OID");
 
-  result = PyBytes_FromString(buf);
+  result = PyUnicode_FromString(buf);
 
  error:
   return result;
@@ -2097,7 +2097,7 @@ extension_get_eku(X509_EXTENSION *ext_)
     goto error;
 
   for (i = 0; i < sk_ASN1_OBJECT_num(ext); i++) {
-    if ((oid = ASN1_OBJECT_to_PyString(sk_ASN1_OBJECT_value(ext, i))) == NULL ||
+    if ((oid = ASN1_OBJECT_to_PyUnicode(sk_ASN1_OBJECT_value(ext, i))) == NULL ||
         PySet_Add(result, oid) < 0)
       goto error;
     Py_XDECREF(oid);
@@ -4615,7 +4615,7 @@ x509_object_get_certificate_policies(x509_object *self)
   for (i = 0; i < sk_POLICYINFO_num(ext); i++) {
     POLICYINFO *p = sk_POLICYINFO_value(ext, i);
 
-    if ((obj = ASN1_OBJECT_to_PyString(p->policyid)) == NULL)
+    if ((obj = ASN1_OBJECT_to_PyUnicode(p->policyid)) == NULL)
       goto error;
 
     PyTuple_SET_ITEM(result, i, obj);
@@ -7319,7 +7319,7 @@ cms_object_eContentType(cms_object *self)
 
   assert_no_unhandled_openssl_errors();
 
-  result = ASN1_OBJECT_to_PyString(oid);
+  result = ASN1_OBJECT_to_PyUnicode(oid);
 
  error:
   return result;
@@ -7923,7 +7923,7 @@ manifest_object_get_algorithm(manifest_object *self)
   if (self->manifest == NULL)
     lose_not_verified("Can't extract algorithm OID of unverified manifest");
 
-  result = ASN1_OBJECT_to_PyString(self->manifest->fileHashAlg);
+  result = ASN1_OBJECT_to_PyUnicode(self->manifest->fileHashAlg);
 
  error:
   return result;
@@ -8057,7 +8057,7 @@ manifest_object_get_files(manifest_object *self)
   for (i = 0; i < sk_FileAndHash_num(self->manifest->fileList); i++) {
     FileAndHash *fah = sk_FileAndHash_value(self->manifest->fileList, i);
 
-    item = Py_BuildValue("(s#s#)",
+    item = Py_BuildValue("(s#y#)",
                          ASN1_STRING_get0_data(fah->file),
                          (Py_ssize_t) ASN1_STRING_length(fah->file),
                          ASN1_STRING_get0_data(fah->hash),
@@ -9383,7 +9383,7 @@ pkcs10_object_get_signature_algorithm(pkcs10_object *self)
   X509_REQ_get0_signature(self->pkcs10, NULL, &palg);
   X509_ALGOR_get0(&oid, NULL, NULL, palg);
 
-  return ASN1_OBJECT_to_PyString(oid);
+  return ASN1_OBJECT_to_PyUnicode(oid);
 }
 
 static char pkcs10_object_get_extension_oids__doc__[] =
@@ -9406,7 +9406,7 @@ pkcs10_object_get_extension_oids(pkcs10_object *self)
 
   for (i = 0; i < sk_X509_EXTENSION_num(self->exts); i++) {
     X509_EXTENSION *ext = sk_X509_EXTENSION_value(self->exts, i);
-    if ((oid = ASN1_OBJECT_to_PyString(X509_EXTENSION_get_object(ext))) == NULL ||
+    if ((oid = ASN1_OBJECT_to_PyUnicode(X509_EXTENSION_get_object(ext))) == NULL ||
         PySet_Add(result, oid) < 0)
       goto error;
     Py_XDECREF(oid);
