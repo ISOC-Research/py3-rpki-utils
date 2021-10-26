@@ -1,5 +1,22 @@
 #!/usr/bin/env python3
 
+# Copyright (C) 2021  The Internet Society ("ISOC")
+# Copyright (C) 2015-2016  Parsons Government Services ("PARSONS")
+# Portions copyright (C) 2014  Dragon Research Labs ("DRL")
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notices and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND PARSONS, DRL and ISOC DISCLAIM ALL
+# WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL
+# PARSONS OR DRL BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
+# CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
+# OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+# NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
 from os.path import dirname, abspath, join
 import sys
 
@@ -29,4 +46,20 @@ class ROA(rpki.POW.ROA):
 
 roa = ROA.derReadFile(sys.argv[1])
 roa.parse()
-print(roa.getASID(), " ".join(roa.v4_prefixes + roa.v6_prefixes))
+print("ROA Version:   ", roa.getVersion())
+print("SigningTime:   ", roa.signingTime())
+print("asID:          ", roa.getASID())
+if roa.v4_prefixes:
+  print(" addressFamily:", 1)
+  for prefix in roa.v4_prefixes:
+    print("     IPAddress:", prefix)
+  if roa.v6_prefixes:
+    print(" addressFamily:", 2)
+    for prefix in roa.v6_prefixes:
+      print("     IPAddress:", prefix)
+print(roa.pprint())
+for cer in roa.certs():
+  print(cer.pprint())
+for crl in roa.crls():
+   print(crl.pprint())
+print
