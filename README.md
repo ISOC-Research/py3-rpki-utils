@@ -7,13 +7,18 @@ than anything else.
 
 Installation and Usage instructions.
 
+```shell
 $ git clone https://github.com/ISOC-Research/py3-rpki-utils.git
 $ cd py3-rpki-utils
 $ python3 setup.py build
 $ cp build/*/*/*/_POW*.so rpki/POW/_POW.so
 $ cd test
+```
 
-$python3 print_roa.py --help
+```shell
+$ python3 print_roa.py --help
+
+```
 usage: print_roa.py [-h] [--brief] [--cms] [--signing-time] roas [roas ...]
 
 Pretty-print the content of a ROA. Does NOT attempt to verify the signature.
@@ -28,7 +33,10 @@ optional arguments:
 --signing-time show SigningTime in brief mode
 
 
+```shell
 $ python3 print_rpki_manifest.py -h
+
+```
 usage: print_rpki_manifest.py [-h] [--cms] manifests [manifests ...]
 
 positional arguments:
