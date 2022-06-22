@@ -12,7 +12,7 @@ $ git clone https://github.com/ISOC-Research/py3-rpki-utils.git
 $ cd py3-rpki-utils
 $ python3 setup.py build
 $ cp build/*/*/*/_POW*.so rpki/POW/_POW.so
-$ cd test
+$ cd print
 ```
 
 ```shell
