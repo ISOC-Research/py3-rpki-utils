@@ -8,9 +8,9 @@ than anything else.
 Installation and Usage instructions.
 
 ```shell
-$ sudo git clone https://github.com/aftabsiddiqui/py3-rpki-utils.git
+$ git clone https://github.com/aftabsiddiqui/py3-rpki-utils.git
 $ cd py3-rpki-utils
-$ sudo python3 setup.py build
+$ python3 setup.py build
 $ cp build/*/*/*/_POW*.so rpki/POW/_POW.so
 $ cd print
 ```
